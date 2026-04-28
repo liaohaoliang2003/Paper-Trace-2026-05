@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -399,6 +400,8 @@ class PaperTraceTests(unittest.TestCase):
         self.assertIn("citation-map", html)
         self.assertIn("Citation Map", html)
         self.assertIn("citation-map-example", html)
+        self.assertIn("map-viewport", html)
+        self.assertIn("max-width: none", html)
 
         with tempfile.TemporaryDirectory() as tmp:
             out_dir = Path(tmp) / "all"
@@ -416,6 +419,81 @@ class PaperTraceTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "hybrid visual mode"):
                 write_render_outputs(graph, Path(tmp) / "hybrid", visual_mode="hybrid")
+
+    def test_example_svg_expands_without_dropping_visible_nodes(self):
+        from paper_trace.providers import MockProvider
+        from paper_trace.render import render_svg
+
+        graph = MockProvider().extract_graph(SAMPLE_TEXT, "sample.txt")
+        intents = [
+            "background",
+            "problem",
+            "core-method",
+            "supporting-method",
+            "theory",
+            "dataset",
+            "metric",
+            "baseline",
+            "result-evidence",
+            "limitation",
+            "tool-resource",
+            "future-work",
+        ]
+        citations = []
+        for index in range(30):
+            intent = intents[index % len(intents)]
+            citations.append(
+                {
+                    "citation_id": f"stress-{index:02d}",
+                    "intent": intent,
+                    "confidence": 0.9 - index * 0.01,
+                    "section": "Stress Test",
+                    "evidence": f"Evidence sentence for {intent} citation {index} with enough words to wrap safely.",
+                    "target_claim": f"Claim {index} explains {intent} without dropping map information",
+                    "cited_work_role": f"Role for {intent}",
+                    "unmatched_reference": True,
+                    "show_on_map": True,
+                }
+            )
+        graph["citations"] = citations
+
+        current_svg = render_svg(graph, visual_mode="current")
+        example_svg = render_svg(graph, visual_mode="example")
+        current_height_match = re.search(r'<svg[^>]+height="(?P<height>\d+)"', current_svg)
+        self.assertIsNotNone(current_height_match)
+        self.assertGreater(int(current_height_match.group("height")), 1000)
+        for citation in citations:
+            self.assertIn(f'id="{citation["citation_id"]}"', current_svg)
+
+        svg = example_svg
+        height_match = re.search(r'<svg[^>]+height="(?P<height>\d+)"', svg)
+        self.assertIsNotNone(height_match)
+        self.assertGreater(int(height_match.group("height")), 1000)
+        for citation in citations:
+            self.assertIn(f'id="{citation["citation_id"]}"', svg)
+
+        rects_by_chain = {}
+        pattern = re.compile(
+            r'<g id="(?P<id>stress-\d+)" data-node-kind="citation" data-chain-id="(?P<chain>[^"]+)">\s*'
+            r'<rect x="(?P<x>[\d.]+)" y="(?P<y>[\d.]+)" width="(?P<w>[\d.]+)" height="(?P<h>[\d.]+)"',
+            re.MULTILINE,
+        )
+        for match in pattern.finditer(svg):
+            rects_by_chain.setdefault(match.group("chain"), []).append(
+                (
+                    float(match.group("x")),
+                    float(match.group("y")),
+                    float(match.group("w")),
+                    float(match.group("h")),
+                )
+            )
+        self.assertEqual(sum(len(rects) for rects in rects_by_chain.values()), len(citations))
+        for rects in rects_by_chain.values():
+            for left_index, left in enumerate(rects):
+                for right in rects[left_index + 1 :]:
+                    horizontally_separate = left[0] + left[2] <= right[0] or right[0] + right[2] <= left[0]
+                    vertically_separate = left[1] + left[3] <= right[1] or right[1] + right[3] <= left[1]
+                    self.assertTrue(horizontally_separate or vertically_separate, (left, right))
 
     def test_cli_analyze_validate_and_render(self):
         with tempfile.TemporaryDirectory() as tmp:

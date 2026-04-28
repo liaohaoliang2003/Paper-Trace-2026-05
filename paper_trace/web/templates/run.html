@@ -16,7 +16,8 @@
     .citation strong { display:block; color:var(--accent); margin-bottom:4px; }
     .map { padding:10px; }
     .map h2 { margin:10px 10px 6px; color:#344054; font-size:18px; }
-    .map svg { max-width:100%; height:auto; }
+    .map svg { max-width:none; height:auto; display:block; }
+    .map-viewport { overflow:auto; max-height:78vh; border:1px solid #edf0f2; border-radius:18px; background:#fbfbfa; }
     .map-block { border-bottom:1px solid #eef1f5; padding-bottom:16px; margin-bottom:16px; }
     .map-block:last-child { border-bottom:0; margin-bottom:0; }
     .editor { padding:18px; }
@@ -46,12 +47,12 @@
   <section class="map">
     <div class="map-block">
       <h2>{% if visual_mode == 'example' %}例图引用链视图{% else %}当前分组视图{% endif %}</h2>
-      {{ svg|safe }}
+      <div class="map-viewport">{{ svg|safe }}</div>
     </div>
     {% if example_svg %}
     <div class="map-block">
       <h2>例图引用链视图</h2>
-      {{ example_svg|safe }}
+      <div class="map-viewport">{{ example_svg|safe }}</div>
     </div>
     {% endif %}
   </section>

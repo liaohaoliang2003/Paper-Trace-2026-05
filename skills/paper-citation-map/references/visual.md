@@ -44,7 +44,15 @@ Recommended group positions:
 
 Use this mode to imitate the user's reference image: a right-side target paper with left-side layered citation chains.
 
-Canvas recommendation: `1400 x 1000`.
+Canvas recommendation: start from a wide canvas such as `2400 x 1000`, then grow the height dynamically with citation count.
+
+Readability and information-preservation rules:
+
+- Do not solve crowding primarily by dropping nodes. Preserve every citation where `show_on_map` is not `false` whenever a static SVG can still be made readable.
+- Prefer dynamic height, wide lanes, multi-column lane packing, generous node spacing, and scrollable HTML containers over `+N citations` summaries.
+- Use `+N citations` only as an extreme fallback when the graph is too large for a static SVG; the full records must still remain in `citation_graph.json`.
+- Draw edges behind nodes and keep edge labels in small badges near chain hubs or open whitespace, not on top of citation nodes.
+- Wrap node titles to multiple `<tspan>`/text lines and keep secondary labels short instead of shrinking fonts below readable size.
 
 Required structure:
 
@@ -58,7 +66,7 @@ Required structure:
 - Main edge labels in Chinese: `问题`, `方法`, `数据集`, `基线`, `局限`.
 - Second-level nodes show method components, datasets, baselines, or key author-year references.
 - Dashed cross-links can show secondary roles, for example a method that is both a baseline and a method reference.
-- If a chain has too many citations, render up to 5 key nodes and add a `+N citations` summary.
+- If a chain has many citations, expand that lane vertically or split it into multiple columns before using any summary node.
 
 Node text priority:
 

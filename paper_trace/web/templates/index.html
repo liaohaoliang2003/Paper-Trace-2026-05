@@ -41,7 +41,7 @@
   <section class="hero">
     <div>
       <h1>Paper Trace</h1>
-      <p>上传论文文本或 PDF，生成引用意图图谱、结构化 JSON 与可编辑的中心论文放射图。默认使用 mock provider；真实 LLM 的 API 配置可在右上角设置中维护。</p>
+      <p>上传论文文本或 PDF，生成引用意图图谱、结构化 JSON 与可编辑的中心论文引用图。默认使用 mock provider；真实 LLM 的 API 配置可在右上角设置中维护。</p>
       {% if error %}<div class="error">{{ error }}</div>{% endif %}
     </div>
     <div class="panel">
@@ -53,6 +53,14 @@
           {% endfor %}
         </select>
         <div class="hint">真实 provider 需要 API Key；点击右上角齿轮可保存 OpenAI-compatible 或智谱 GLM 配置。</div>
+        <label>图像模式</label>
+        <select name="visual_mode">
+          <option value="all" {% if selected_visual_mode == 'all' %}selected{% endif %}>all：当前模式 + 例图模式</option>
+          <option value="current" {% if selected_visual_mode == 'current' %}selected{% endif %}>current：当前 SVG 编排</option>
+          <option value="example" {% if selected_visual_mode == 'example' %}selected{% endif %}>example：参考例图编排</option>
+          <option value="hybrid" {% if selected_visual_mode == 'hybrid' %}selected{% endif %}>hybrid：混合可展开知识图谱（预留，暂不可用）</option>
+        </select>
+        <div class="hint">未指定时默认生成 current 与 example 两种静态 SVG；hybrid 仅作为未来 Web 交互图谱预留。</div>
         <label>选择 .txt、.md 或 .pdf</label>
         <input name="file" type="file" accept=".txt,.md,.pdf" required/>
         <button type="submit">运行分析</button>
@@ -70,19 +78,21 @@
     <div class="settings-head">
       <div>
         <h2 id="settings-title">API 设置</h2>
-        <p class="hint">配置保存在项目本地 `.paper_trace/config.json`；API Key 只会遮罩显示。</p>
+        <p class="hint">配置只保存到本机 `.paper_trace/config.json`，页面不会展示完整 API Key。</p>
       </div>
       <a href="#" aria-label="关闭设置">×</a>
     </div>
     {% for provider in configurable_providers %}
     {% set setting = provider_settings.get(provider, {}) %}
-    <form action="{{ url_for('save_settings') }}" method="post" class="panel" style="margin-top:18px; box-shadow:none;">
+    <form action="{{ url_for('save_settings') }}" method="post">
       <input type="hidden" name="provider" value="{{ provider }}"/>
       <h3>{{ provider }}</h3>
-      {% if setting.get('api_key') %}<div class="hint">当前 Key：<span class="masked">{{ setting.get('api_key') }}</span></div>{% endif %}
-      <label>API Key</label>
-      <input name="api_key" type="password" placeholder="留空则保留已有 Key" autocomplete="off"/>
+      {% if setting.get('api_key') %}<div class="hint">已保存 Key：<span class="masked">{{ setting.get('api_key') }}</span></div>{% endif %}
       <div class="setting-grid">
+        <div>
+          <label>API Key</label>
+          <input name="api_key" type="password" value="" placeholder="留空则保留已保存 Key"/>
+        </div>
         {% if provider == 'openai-compatible' %}
         <div>
           <label>Base URL</label>

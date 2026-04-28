@@ -15,7 +15,10 @@
     .citation { display:block; padding:12px; border-bottom:1px solid #f0f2f5; color:inherit; text-decoration:none; }
     .citation strong { display:block; color:var(--accent); margin-bottom:4px; }
     .map { padding:10px; }
+    .map h2 { margin:10px 10px 6px; color:#344054; font-size:18px; }
     .map svg { max-width:100%; height:auto; }
+    .map-block { border-bottom:1px solid #eef1f5; padding-bottom:16px; margin-bottom:16px; }
+    .map-block:last-child { border-bottom:0; margin-bottom:0; }
     .editor { padding:18px; }
     label { display:block; font-size:13px; font-weight:700; margin-top:12px; color:#344054; }
     input, select, textarea { width:100%; box-sizing:border-box; padding:10px; border:1px solid #d0d5dd; border-radius:12px; font:inherit; }
@@ -27,7 +30,7 @@
 </head>
 <body>
 <header>
-  <div><strong>{{ graph.paper.title }}</strong><span style="color:#667085"> · {{ run_id }}</span></div>
+  <div><strong>{{ graph.paper.title }}</strong><span style="color:#667085"> · {{ run_id }} · {{ visual_mode }}</span></div>
   <a href="{{ url_for('index') }}">返回首页</a>
 </header>
 <main class="citation-workspace">
@@ -40,7 +43,18 @@
       </a>
     {% endfor %}
   </aside>
-  <section class="map">{{ svg|safe }}</section>
+  <section class="map">
+    <div class="map-block">
+      <h2>{% if visual_mode == 'example' %}例图引用链视图{% else %}当前分组视图{% endif %}</h2>
+      {{ svg|safe }}
+    </div>
+    {% if example_svg %}
+    <div class="map-block">
+      <h2>例图引用链视图</h2>
+      {{ example_svg|safe }}
+    </div>
+    {% endif %}
+  </section>
   <aside class="editor">
     <h2>编辑引用</h2>
     {% for citation in graph.citations %}

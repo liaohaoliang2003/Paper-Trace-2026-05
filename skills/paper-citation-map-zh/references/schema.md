@@ -71,6 +71,12 @@
 - `coarse_intent`：`background`、`method` 或 `result`。
 - `notes`：不确定性或抽取说明。
 - `show_on_map`：布尔值；对应该展示到 `citation_map.svg` 的引用设置为 `true`，尤其是 `core-method`、`dataset`、`metric`、`baseline` 引用。
+- `target_claim`：该引用支撑的目标论文论点、方法选择、数据选择或结果解释。
+- `cited_work_role`：被引工作的角色，例如问题来源、方法组件、数据集来源、基线、工具、理论、结果证据或局限。
+- `intent_rationale`：为什么当前 intent 比相近标签更合适。
+- `confidence_reason`：为什么置信度是高、中或低。
+
+这些解释字段是可选质量字段，用于增强 `analysis.md` 的分析深度；它们不替代必需的 `intent`、`evidence`、`confidence` 和参考文献链接字段。
 
 校验规则：每条 citation 必须包含 `intent`、`evidence`，并且必须有非空 `reference_id` 或 `unmatched_reference: true`。不要输出既无参考文献链接、也未明确标记 unmatched 的 citation。
 

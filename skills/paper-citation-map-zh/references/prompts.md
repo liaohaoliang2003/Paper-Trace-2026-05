@@ -14,8 +14,9 @@
 4. 不要编造标题、作者、年份、数据集、指标或论文结论。
 5. 如果参考文献无法匹配，设置 unmatched_reference=true 且 reference_id=null。
 6. 如果证据较弱，降低 confidence，并用中文解释不确定性。
-7. 不要输出 API Key、隐藏推理过程、供应商元数据或私有绝对路径。
-8. 生成完整对象，确保校验后可直接写入 citation_graph.json。
+7. 对关键 citation，尽量写出意图判据、被引工作角色、目标论文论点和置信度理由。
+8. 不要输出 API Key、隐藏推理过程、供应商元数据或私有绝对路径。
+9. 生成完整对象，确保校验后可直接写入 citation_graph.json。
 ```
 
 ## 引用抽取 Prompt
@@ -53,6 +54,10 @@ background, problem, core-method, supporting-method, dataset, metric, baseline, 
       "intent": "一个允许标签",
       "confidence": 0.0,
       "evidence": "基于文本的中文解释",
+      "target_claim": "该引用支撑的目标论文论点；无法确认时写 unknown",
+      "cited_work_role": "问题来源 / 方法组件 / 数据集来源 / 基线 / 工具 / 理论 / 结果证据 / 局限",
+      "intent_rationale": "为什么该 intent 比相近标签更合适",
+      "confidence_reason": "为什么置信度是高、中或低",
       "secondary_intents": [],
       "entity_mentions": ["出现的方法/数据集/指标/问题名称"],
       "coarse_intent": "background/method/result"
@@ -162,6 +167,8 @@ background, problem, core-method, supporting-method, dataset, metric, baseline, 
 4. 参考文献缺失时，不编造文献信息。
 5. 不出现 API Key、私有绝对路径或供应商元数据。
 6. 图谱包含足够的 visual_groups 和 show_on_map 信息，能够渲染 citation_map.svg 或确定性 SVG-ready 替代方案。
+7. 关键 citation 不能只有空泛总结；应包含意图判据、被引工作角色、目标论文论点，或明确的不确定性说明。
+8. 证据较弱、来自噪声文本或表格残片时，不得给高置信度。
 
 返回以下 JSON 对象：
 {

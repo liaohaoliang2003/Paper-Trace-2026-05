@@ -71,6 +71,12 @@ Optional fields:
 - `coarse_intent`: one of `background`, `method`, `result`.
 - `notes`: uncertainty or extraction notes.
 - `show_on_map`: boolean; set `true` for citations that should appear in `citation_map.svg`, especially `core-method`, `dataset`, `metric`, and `baseline` citations.
+- `target_claim`: target-paper claim, method choice, dataset choice, or result interpretation supported by the citation.
+- `cited_work_role`: role of the cited work, such as problem origin, method component, dataset source, baseline, tool, theory, result evidence, or limitation.
+- `intent_rationale`: why the selected intent label is more appropriate than nearby labels.
+- `confidence_reason`: why the confidence value is high, medium, or low.
+
+These explanatory fields are optional quality fields. They improve `analysis.md` depth but do not replace the required `intent`, `evidence`, `confidence`, and reference-linkage fields.
 
 Validation rule: every citation must include `intent`, `evidence`, and either a non-empty `reference_id` or `unmatched_reference: true`. Do not emit a citation that lacks both reference linkage and an explicit unmatched status.
 

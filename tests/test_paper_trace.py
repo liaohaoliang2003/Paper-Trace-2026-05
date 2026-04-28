@@ -380,17 +380,42 @@ class PaperTraceTests(unittest.TestCase):
 
     def test_render_outputs_svg_and_html(self):
         from paper_trace.providers import MockProvider
-        from paper_trace.render import render_html, render_svg
+        from paper_trace.render import render_html, render_svg, write_render_outputs
 
         graph = MockProvider().extract_graph(SAMPLE_TEXT, "sample.txt")
-        svg = render_svg(graph)
-        html = render_html(graph, svg)
+        svg = render_svg(graph, visual_mode="current")
+        example_svg = render_svg(graph, visual_mode="example")
+        html = render_html(graph, svg, example_svg, visual_mode="all")
 
         self.assertIn("<svg", svg)
         self.assertIn("target-paper", svg)
         self.assertIn("legend", svg)
+        self.assertIn("<svg", example_svg)
+        self.assertIn("target-paper", example_svg)
+        self.assertIn("问题链", example_svg)
+        self.assertIn("方法链", example_svg)
+        self.assertIn("数据链", example_svg)
+        self.assertIn("基线链", example_svg)
         self.assertIn("citation-map", html)
         self.assertIn("Citation Map", html)
+        self.assertIn("citation-map-example", html)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out_dir = Path(tmp) / "all"
+            write_render_outputs(graph, out_dir, visual_mode="all")
+            self.assertTrue((out_dir / "citation_map.svg").exists())
+            self.assertTrue((out_dir / "citation_map_example.svg").exists())
+            self.assertTrue((out_dir / "citation_map.html").exists())
+
+            example_dir = Path(tmp) / "example"
+            write_render_outputs(graph, example_dir, visual_mode="example")
+            self.assertTrue((example_dir / "citation_map.svg").exists())
+            self.assertTrue((example_dir / "citation_map.html").exists())
+            self.assertFalse((example_dir / "citation_map_example.svg").exists())
+            self.assertIn("问题链", (example_dir / "citation_map.svg").read_text(encoding="utf-8"))
+
+            with self.assertRaisesRegex(ValueError, "hybrid visual mode"):
+                write_render_outputs(graph, Path(tmp) / "hybrid", visual_mode="hybrid")
 
     def test_cli_analyze_validate_and_render(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -410,6 +435,7 @@ class PaperTraceTests(unittest.TestCase):
 
             for name in ["analysis.md", "citation_graph.json", "citation_map.svg", "citation_map.html", "source.txt"]:
                 self.assertTrue((out_dir / name).exists(), name)
+            self.assertTrue((out_dir / "citation_map_example.svg").exists())
 
             validate = subprocess.run(
                 [sys.executable, "-m", "paper_trace", "validate", str(out_dir / "citation_graph.json")],
@@ -427,7 +453,48 @@ class PaperTraceTests(unittest.TestCase):
             )
             self.assertEqual(render.returncode, 0, render.stderr)
             self.assertTrue((render_dir / "citation_map.svg").exists())
+            self.assertTrue((render_dir / "citation_map_example.svg").exists())
             self.assertTrue((render_dir / "citation_map.html").exists())
+
+            example_render_dir = root / "rendered-example"
+            render_example = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "paper_trace",
+                    "render",
+                    str(out_dir / "citation_graph.json"),
+                    "--out",
+                    str(example_render_dir),
+                    "--visual-mode",
+                    "example",
+                ],
+                cwd=Path(__file__).resolve().parents[1],
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(render_example.returncode, 0, render_example.stderr)
+            self.assertTrue((example_render_dir / "citation_map.svg").exists())
+            self.assertFalse((example_render_dir / "citation_map_example.svg").exists())
+
+            render_hybrid = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "paper_trace",
+                    "render",
+                    str(out_dir / "citation_graph.json"),
+                    "--out",
+                    str(root / "rendered-hybrid"),
+                    "--visual-mode",
+                    "hybrid",
+                ],
+                cwd=Path(__file__).resolve().parents[1],
+                text=True,
+                capture_output=True,
+            )
+            self.assertNotEqual(render_hybrid.returncode, 0)
+            self.assertIn("hybrid visual mode", render_hybrid.stderr)
 
     def test_flask_upload_and_edit_flow(self):
         from paper_trace.web.app import create_app
@@ -435,15 +502,19 @@ class PaperTraceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             app = create_app(output_root=Path(tmp) / "web", config_path=Path(tmp) / ".paper_trace" / "config.json")
             client = app.test_client()
+            index = client.get("/")
+            self.assertEqual(index.status_code, 200)
+            self.assertIn("图像模式".encode("utf-8"), index.data)
 
             upload = client.post(
                 "/analyze",
-                data={"file": (self._bytes_file(SAMPLE_TEXT), "sample.txt")},
+                data={"visual_mode": "all", "file": (self._bytes_file(SAMPLE_TEXT), "sample.txt")},
                 content_type="multipart/form-data",
                 follow_redirects=True,
             )
             self.assertEqual(upload.status_code, 200)
             self.assertIn(b"citation-workspace", upload.data)
+            self.assertIn("例图引用链视图".encode("utf-8"), upload.data)
 
             graph_path = next((Path(tmp) / "web").glob("*/citation_graph.json"))
             graph = json.loads(graph_path.read_text(encoding="utf-8"))
@@ -467,6 +538,15 @@ class PaperTraceTests(unittest.TestCase):
             self.assertEqual(updated["citations"][0]["intent"], "dataset")
             self.assertEqual(updated["citations"][0]["notes"], "curated")
             self.assertTrue((graph_path.parent / "citation_map.svg").exists())
+            self.assertTrue((graph_path.parent / "citation_map_example.svg").exists())
+
+            hybrid = client.post(
+                "/analyze",
+                data={"visual_mode": "hybrid", "file": (self._bytes_file(SAMPLE_TEXT), "hybrid.txt")},
+                content_type="multipart/form-data",
+            )
+            self.assertEqual(hybrid.status_code, 400)
+            self.assertIn("混合可展开知识图谱模式暂未实现".encode("utf-8"), hybrid.data)
 
     def test_flask_run_id_with_dots_and_suffix_opens(self):
         from paper_trace.providers import MockProvider

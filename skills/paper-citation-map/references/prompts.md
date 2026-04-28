@@ -14,8 +14,9 @@ Rules:
 4. Do not invent titles, authors, years, datasets, metrics, or claims.
 5. If a reference cannot be matched, set unmatched_reference=true and reference_id=null.
 6. If evidence is weak, lower confidence and explain the uncertainty in Chinese.
-7. Never include API keys, hidden chain-of-thought, provider metadata, or private absolute file paths.
-8. Produce a complete object that can be written to citation_graph.json after validation.
+7. For important citations, include intent rationale, cited-work role, target claim, and confidence reason when visible.
+8. Never include API keys, hidden chain-of-thought, provider metadata, or private absolute file paths.
+9. Produce a complete object that can be written to citation_graph.json after validation.
 ```
 
 ## Citation Extraction Prompt
@@ -53,6 +54,10 @@ Return this JSON object:
       "intent": "one allowed label",
       "confidence": 0.0,
       "evidence": "Chinese explanation grounded in the text",
+      "target_claim": "target-paper claim supported by this citation, or unknown",
+      "cited_work_role": "problem origin / method component / dataset source / baseline / tool / theory / result evidence / limitation",
+      "intent_rationale": "why this intent label fits better than nearby labels",
+      "confidence_reason": "why confidence is high, medium, or low",
       "secondary_intents": [],
       "entity_mentions": ["method/dataset/metric/problem names if present"],
       "coarse_intent": "background/method/result"
@@ -162,6 +167,8 @@ Check:
 4. No bibliographic facts are invented when references are missing.
 5. No API keys, private absolute paths, or provider metadata appear.
 6. The graph contains enough visual_groups and show_on_map cues to render citation_map.svg or a deterministic SVG-ready fallback.
+7. Key citations are not empty summaries: they include an intent rationale, cited-work role, target claim, or an explicit uncertainty note.
+8. Weak, noisy, or table-derived evidence is not reported as high confidence.
 
 Return this JSON object:
 {

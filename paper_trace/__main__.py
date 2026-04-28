@@ -11,6 +11,9 @@ from .schema import ValidationError
 from .workflow import analyze_input, render_graph_file, validate_graph_file
 
 
+VISUAL_MODE_CHOICES = ["current", "example", "all", "hybrid"]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="paper_trace", description="Paper citation intent graph CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -19,10 +22,12 @@ def main(argv: list[str] | None = None) -> int:
     analyze.add_argument("input", type=Path)
     analyze.add_argument("--out", type=Path, default=None)
     analyze.add_argument("--provider", default="mock")
+    analyze.add_argument("--visual-mode", choices=VISUAL_MODE_CHOICES, default="all")
 
     render = subparsers.add_parser("render", help="Render SVG/HTML from citation_graph.json")
     render.add_argument("graph_json", type=Path)
     render.add_argument("--out", type=Path, required=True)
+    render.add_argument("--visual-mode", choices=VISUAL_MODE_CHOICES, default="all")
 
     validate = subparsers.add_parser("validate", help="Validate citation_graph.json")
     validate.add_argument("graph_json", type=Path)
@@ -57,11 +62,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "analyze":
-            out_dir = analyze_input(args.input, args.out, args.provider)
+            out_dir = analyze_input(args.input, args.out, args.provider, visual_mode=args.visual_mode)
             print(f"Wrote outputs to {out_dir}")
             return 0
         if args.command == "render":
-            out_dir = render_graph_file(args.graph_json, args.out)
+            out_dir = render_graph_file(args.graph_json, args.out, visual_mode=args.visual_mode)
             print(f"Rendered outputs to {out_dir}")
             return 0
         if args.command == "validate":

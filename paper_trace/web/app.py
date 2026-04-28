@@ -13,6 +13,7 @@ from ..workflow import analyze_input
 
 
 PROVIDER_OPTIONS = ["mock", "openai-compatible", "zhipu-glm"]
+VISUAL_MODE_OPTIONS = ["all", "current", "example", "hybrid"]
 
 
 def create_app(output_root: Path | str = Path("outputs") / "web", config_path: Path | str | None = None) -> Flask:
@@ -23,17 +24,22 @@ def create_app(output_root: Path | str = Path("outputs") / "web", config_path: P
 
     @app.get("/")
     def index():
-        return _render_index(app, None, "mock")
+        return _render_index(app, None, "mock", "all")
 
     @app.post("/analyze")
     def analyze_upload():
         provider_name = request.form.get("provider", "mock")
+        visual_mode = request.form.get("visual_mode", "all")
         if provider_name not in PROVIDER_OPTIONS:
-            return _render_index(app, "不支持的 provider", "mock"), 400
+            return _render_index(app, "不支持的 provider", "mock", visual_mode), 400
+        if visual_mode not in VISUAL_MODE_OPTIONS:
+            return _render_index(app, "不支持的图像模式", provider_name, "all"), 400
+        if visual_mode == "hybrid":
+            return _render_index(app, "混合可展开知识图谱模式暂未实现", provider_name, visual_mode), 400
 
         uploaded = request.files.get("file")
         if not uploaded or not uploaded.filename:
-            return _render_index(app, "请选择 .txt、.md 或 .pdf 文件", provider_name), 400
+            return _render_index(app, "请选择 .txt、.md 或 .pdf 文件", provider_name, visual_mode), 400
 
         stem = safe_stem(uploaded.filename)
         run_dir = _unique_run_dir(app.config["OUTPUT_ROOT"], stem)
@@ -41,16 +47,16 @@ def create_app(output_root: Path | str = Path("outputs") / "web", config_path: P
         run_dir.mkdir(parents=True, exist_ok=True)
         uploaded.save(input_path)
         try:
-            analyze_input(input_path, run_dir, provider_name, config_path=_config_path(app))
+            analyze_input(input_path, run_dir, provider_name, config_path=_config_path(app), visual_mode=visual_mode)
         except (InputReadError, ValidationError, ValueError, RuntimeError) as exc:
-            return _render_index(app, str(exc), provider_name), 400
+            return _render_index(app, str(exc), provider_name, visual_mode), 400
         return redirect(url_for("view_run", run_id=run_dir.name))
 
     @app.post("/settings")
     def save_settings():
         provider_name = request.form.get("provider", "")
         if provider_name not in PROVIDER_OPTIONS or provider_name == "mock":
-            return _render_index(app, "请选择可配置的真实 provider", "mock"), 400
+            return _render_index(app, "请选择可配置的真实 provider", "mock", "all"), 400
 
         try:
             current = get_provider_config(provider_name, _config_path(app))
@@ -66,7 +72,7 @@ def create_app(output_root: Path | str = Path("outputs") / "web", config_path: P
                 values["api_key"] = submitted_key if submitted_key else current.get("api_key")
             save_provider_config(provider_name, values, _config_path(app))
         except ConfigError as exc:
-            return _render_index(app, str(exc), provider_name), 400
+            return _render_index(app, str(exc), provider_name, "all"), 400
         return redirect(url_for("index"))
 
     @app.get("/run/<run_id>")
@@ -74,12 +80,16 @@ def create_app(output_root: Path | str = Path("outputs") / "web", config_path: P
         run_dir = _safe_run_dir(app.config["OUTPUT_ROOT"], run_id)
         graph = _load_graph_or_404(run_dir)
         svg = (run_dir / "citation_map.svg").read_text(encoding="utf-8") if (run_dir / "citation_map.svg").exists() else ""
+        example_svg = (run_dir / "citation_map_example.svg").read_text(encoding="utf-8") if (run_dir / "citation_map_example.svg").exists() else ""
         analysis = (run_dir / "analysis.md").read_text(encoding="utf-8") if (run_dir / "analysis.md").exists() else ""
+        visual_mode = graph.get("metadata", {}).get("visual_mode", "all")
         return render_template(
             "run.html",
             run_id=run_id,
             graph=graph,
             svg=svg,
+            example_svg=example_svg,
+            visual_mode=visual_mode,
             analysis=analysis,
             intents=ALLOWED_INTENTS,
             error=None,
@@ -108,15 +118,16 @@ def create_app(output_root: Path | str = Path("outputs") / "web", config_path: P
         citation["evidence"] = evidence
         citation["notes"] = request.form.get("notes", "")
         citation["show_on_map"] = request.form.get("show_on_map") == "on"
+        visual_mode = graph.get("metadata", {}).get("visual_mode", "all")
         validate_graph(graph)
         write_json(graph_path, graph)
-        write_render_outputs(graph, run_dir)
+        write_render_outputs(graph, run_dir, visual_mode=visual_mode)
         return redirect(url_for("view_run", run_id=run_id))
 
     return app
 
 
-def _render_index(app: Flask, error: str | None, selected_provider: str):
+def _render_index(app: Flask, error: str | None, selected_provider: str, selected_visual_mode: str = "all"):
     return render_template(
         "index.html",
         runs=_list_runs(app.config["OUTPUT_ROOT"]),
@@ -125,6 +136,8 @@ def _render_index(app: Flask, error: str | None, selected_provider: str):
         configurable_providers=[provider for provider in PROVIDER_OPTIONS if provider != "mock"],
         provider_settings=_provider_settings(app),
         selected_provider=selected_provider if selected_provider in PROVIDER_OPTIONS else "mock",
+        visual_modes=VISUAL_MODE_OPTIONS,
+        selected_visual_mode=selected_visual_mode if selected_visual_mode in VISUAL_MODE_OPTIONS else "all",
     )
 
 

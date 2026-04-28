@@ -1,0 +1,9 @@
+{
+  "python.defaultInterpreterPath": "C:\\ProgramData\\anaconda3\\Python.exe",
+  "python.terminal.activateEnvironment": true,
+  "python.testing.unittestEnabled": true,
+  "python.testing.unittestArgs": [
+    "-v",
+    "tests.test_paper_trace"
+  ]
+}

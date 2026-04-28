@@ -1,0 +1,44 @@
+# Previous private code
+sci_glm/
+CitePrompt/
+PROJECT_ANALYSIS.md
+
+
+# Local Paper Trace configuration and secrets
+.paper_trace/
+.env
+.env.*
+!.env.example
+
+# Runtime outputs and logs
+outputs/
+*.log
+
+# Python caches and test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Notebook, IDE, and OS temporary files
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+
+# Local OMX runtime state
+.omx/

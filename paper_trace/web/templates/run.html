@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{ graph.paper.title }} · Paper Trace</title>
+  <style>
+    :root { --ink:#172033; --muted:#667085; --line:#e4e7ec; --accent:#ef6c2f; --bg:#f6f7f8; }
+    body { margin:0; font-family: Inter, "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--ink); }
+    header { display:flex; justify-content:space-between; align-items:center; padding:18px 24px; background:white; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
+    header a { color:var(--muted); text-decoration:none; }
+    .citation-workspace { display:grid; grid-template-columns: 330px minmax(420px, 1fr) 360px; gap:16px; padding:16px; height: calc(100vh - 74px); box-sizing:border-box; }
+    aside, section { background:white; border:1px solid var(--line); border-radius:20px; overflow:auto; }
+    .list { padding:14px; }
+    .citation { display:block; padding:12px; border-bottom:1px solid #f0f2f5; color:inherit; text-decoration:none; }
+    .citation strong { display:block; color:var(--accent); margin-bottom:4px; }
+    .map { padding:10px; }
+    .map svg { max-width:100%; height:auto; }
+    .editor { padding:18px; }
+    label { display:block; font-size:13px; font-weight:700; margin-top:12px; color:#344054; }
+    input, select, textarea { width:100%; box-sizing:border-box; padding:10px; border:1px solid #d0d5dd; border-radius:12px; font:inherit; }
+    textarea { min-height:74px; resize:vertical; }
+    button { margin-top:14px; background:var(--accent); color:white; border:0; padding:11px 16px; border-radius:999px; font-weight:700; cursor:pointer; }
+    pre { white-space:pre-wrap; font-size:13px; color:var(--muted); }
+    @media (max-width: 1100px) { .citation-workspace { grid-template-columns:1fr; height:auto; } }
+  </style>
+</head>
+<body>
+<header>
+  <div><strong>{{ graph.paper.title }}</strong><span style="color:#667085"> · {{ run_id }}</span></div>
+  <a href="{{ url_for('index') }}">返回首页</a>
+</header>
+<main class="citation-workspace">
+  <aside class="list">
+    <h2>Citations</h2>
+    {% for citation in graph.citations %}
+      <a class="citation" href="#edit-{{ citation.citation_id }}">
+        <strong>{{ citation.intent }}</strong>
+        <span>{{ citation.citation_id }} · {{ citation.section }}</span>
+      </a>
+    {% endfor %}
+  </aside>
+  <section class="map">{{ svg|safe }}</section>
+  <aside class="editor">
+    <h2>编辑引用</h2>
+    {% for citation in graph.citations %}
+    <form id="edit-{{ citation.citation_id }}" action="{{ url_for('edit_citation', run_id=run_id, citation_id=citation.citation_id) }}" method="post">
+      <h3>{{ citation.citation_id }}</h3>
+      <label>Intent</label>
+      <select name="intent">{% for intent in intents %}<option value="{{ intent }}" {% if citation.intent == intent %}selected{% endif %}>{{ intent }}</option>{% endfor %}</select>
+      <label>Confidence</label>
+      <input name="confidence" type="number" step="0.01" min="0" max="1" value="{{ citation.confidence }}"/>
+      <label>Evidence</label>
+      <textarea name="evidence">{{ citation.evidence }}</textarea>
+      <label>Notes</label>
+      <textarea name="notes">{{ citation.notes }}</textarea>
+      <label><input name="show_on_map" type="checkbox" {% if citation.show_on_map is not false %}checked{% endif %} style="width:auto"/> 显示在图中</label>
+      <button type="submit">保存并重绘</button>
+    </form>
+    <hr/>
+    {% endfor %}
+    <h2>Analysis</h2>
+    <pre>{{ analysis }}</pre>
+  </aside>
+</main>
+</body>
+</html>

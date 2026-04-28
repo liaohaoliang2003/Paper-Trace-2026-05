@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Paper Trace Web (Anaconda)",
+      "type": "python",
+      "request": "launch",
+      "python": "C:\\ProgramData\\anaconda3\\Python.exe",
+      "module": "paper_trace",
+      "args": [
+        "web",
+        "--debug",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8765"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Paper Trace CLI Analyze Mock (Anaconda)",
+      "type": "python",
+      "request": "launch",
+      "python": "C:\\ProgramData\\anaconda3\\Python.exe",
+      "module": "paper_trace",
+      "args": [
+        "analyze",
+        "README.md",
+        "--out",
+        "outputs/vscode-mock",
+        "--provider",
+        "mock"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

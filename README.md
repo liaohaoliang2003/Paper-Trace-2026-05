@@ -2,26 +2,23 @@
 
 Paper Trace 用于从论文文本或 PDF 中抽取引用意图，生成结构化 `citation_graph.json`、中文分析报告和 SVG/HTML 引用图谱。
 
-当前公开维护的主要部分：
+项目主要部分：
 
 - `paper_trace/`：CLI、Flask Web、provider、schema、渲染器。
 - `skills/`：指导 Agent 生成引用意图分析、JSON 图谱和 SVG 图像的 Citation Map Skills。
 - `CitePrompt/` 与 `sci_glm/`：本地私有历史参考代码，已按 private code 规则从 Git 上传中排除。
 
-## 运行命令
-
-本项目在当前 Windows 开发环境中主推显式 Anaconda 解释器：
-
-```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace ...
-```
-
-不要优先使用裸 `python -m paper_trace ...`，因为系统默认 `python` 可能指向未安装 `openai` / `zhipuai` 的解释器。
-
 ### 启动 Web
+
+Anaconda：
 
 ```powershell
 C:\ProgramData\anaconda3\Python.exe -m paper_trace web --debug --host 127.0.0.1 --port 8765
+```
+base python:
+
+```powershell
+python -m paper_trace web --debug --host 127.0.0.1 --port 8765
 ```
 
 打开：

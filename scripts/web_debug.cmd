@@ -1,11 +1,18 @@
 @echo off
-set "PYTHON_EXE=C:\ProgramData\anaconda3\Python.exe"
+setlocal
 
-if not exist "%PYTHON_EXE%" (
-  echo Anaconda Python not found at %PYTHON_EXE%.
-  echo Update scripts\web_debug.cmd or install Anaconda base.
-  exit /b 1
+if defined PAPER_TRACE_PYTHON (
+  set "PYTHON_EXE=%PAPER_TRACE_PYTHON%"
+) else (
+  set "PYTHON_EXE=python"
 )
 
 "%PYTHON_EXE%" -m paper_trace web --debug --host 127.0.0.1 --port 8765
-exit /b %ERRORLEVEL%
+set "EXIT_CODE=%ERRORLEVEL%"
+
+if "%EXIT_CODE%"=="9009" (
+  echo Could not run "%PYTHON_EXE%".
+  echo Set PAPER_TRACE_PYTHON to your Python executable or ensure python is on PATH.
+)
+
+exit /b %EXIT_CODE%

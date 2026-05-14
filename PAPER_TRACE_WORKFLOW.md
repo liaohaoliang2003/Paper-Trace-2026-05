@@ -1,24 +1,24 @@
 # Paper Trace 工作流
 
-本文档记录 Paper Trace 的常用运行方式、配置、图像模式和验证流程。当前 Windows 开发环境统一使用 Anaconda Python：
+本文档记录 Paper Trace 的常用运行方式、配置、图像模式和验证流程。GitHub 版本默认使用通用 Python 入口：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace ...
+python -m paper_trace ...
 ```
 
-如果使用裸 `python`，可能会调用到 `C:\Program Files\Python38\python.exe` 等系统解释器，从而缺少 `openai` / `zhipuai` 依赖。
+如果本机需要固定解释器，例如 conda、venv 或 Windows Anaconda，可以设置 `PAPER_TRACE_PYTHON` 供补充脚本使用，或在命令中用你的解释器路径替换 `python`。
 
 ## 1. 环境检查
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -c "import sys; print(sys.executable)"
-C:\ProgramData\anaconda3\Python.exe -m pip install -r requirements-paper-trace.txt
+python -c "import sys; print(sys.executable)"
+python -m pip install -r requirements-paper-trace.txt
 ```
 
 按需安装真实 provider 依赖：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m pip install openai zhipuai pypdf
+python -m pip install openai zhipuai pypdf
 ```
 
 ## 2. API 配置
@@ -26,26 +26,26 @@ C:\ProgramData\anaconda3\Python.exe -m pip install openai zhipuai pypdf
 查看配置位置和当前遮罩配置：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config path
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config list
+python -m paper_trace config path
+python -m paper_trace config list
 ```
 
 OpenAI-compatible 中转站推荐配置：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config set --provider openai-compatible --api-key "your-key" --base-url "https://api.anyone.ai/v1" --model "gpt-5.5" --stream true --timeout 300
+python -m paper_trace config set --provider openai-compatible --api-key "your-key" --base-url "https://api.anyone.ai/v1" --model "gpt-5.5" --stream true --timeout 300
 ```
 
 智谱 GLM 配置示例：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config set --provider zhipu-glm --api-key "your-key" --model "glm-4-flash"
+python -m paper_trace config set --provider zhipu-glm --api-key "your-key" --model "glm-4-flash"
 ```
 
 清除配置：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config clear --provider openai-compatible
+python -m paper_trace config clear --provider openai-compatible
 ```
 
 ## 3. CLI 分析
@@ -53,19 +53,19 @@ C:\ProgramData\anaconda3\Python.exe -m paper_trace config clear --provider opena
 Mock provider：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace analyze path\to\paper.txt --out outputs\paper-demo --provider mock
+python -m paper_trace analyze path\to\paper.txt --out outputs\paper-demo --provider mock
 ```
 
 OpenAI-compatible provider：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace analyze path\to\paper.txt --out outputs\paper-llm --provider openai-compatible --visual-mode all
+python -m paper_trace analyze path\to\paper.txt --out outputs\paper-llm --provider openai-compatible --visual-mode all
 ```
 
 智谱 GLM provider：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace analyze path\to\paper.txt --out outputs\paper-glm --provider zhipu-glm --visual-mode current
+python -m paper_trace analyze path\to\paper.txt --out outputs\paper-glm --provider zhipu-glm --visual-mode current
 ```
 
 输出目录通常包含：
@@ -96,14 +96,14 @@ outputs/paper-demo/
 重新渲染已有 JSON：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace render outputs\paper-demo\citation_graph.json --out outputs\paper-rendered --visual-mode all
-C:\ProgramData\anaconda3\Python.exe -m paper_trace render outputs\paper-demo\citation_graph.json --out outputs\paper-rendered-example --visual-mode example
+python -m paper_trace render outputs\paper-demo\citation_graph.json --out outputs\paper-rendered --visual-mode all
+python -m paper_trace render outputs\paper-demo\citation_graph.json --out outputs\paper-rendered-example --visual-mode example
 ```
 
 ## 5. 校验
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace validate outputs\paper-demo\citation_graph.json
+python -m paper_trace validate outputs\paper-demo\citation_graph.json
 ```
 
 关键 schema 约束：
@@ -120,7 +120,7 @@ C:\ProgramData\anaconda3\Python.exe -m paper_trace validate outputs\paper-demo\c
 启动：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace web --debug --host 127.0.0.1 --port 8765
+python -m paper_trace web --debug --host 127.0.0.1 --port 8765
 ```
 
 访问：
@@ -140,7 +140,7 @@ Web 支持：
 
 ## 7. 补充脚本入口
 
-脚本不是主入口，只作为 Windows 下的补充：
+脚本不是主入口，只作为 Windows 下的补充。脚本优先使用 `PAPER_TRACE_PYTHON`，否则回退到 PATH 中的 `python`：
 
 ```powershell
 scripts\paper_trace.cmd --help
@@ -174,8 +174,8 @@ Skill 图像模式规则：
 ## 9. 回归验证
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m unittest tests.test_paper_trace -v
-Get-ChildItem -Recurse paper_trace -Filter *.py | ForEach-Object { C:\ProgramData\anaconda3\Python.exe -m py_compile $_.FullName }
+python -m unittest tests.test_paper_trace -v
+Get-ChildItem -Recurse paper_trace -Filter *.py | ForEach-Object { python -m py_compile $_.FullName }
 cmd /c scripts\paper_trace.cmd --help
 ```
 

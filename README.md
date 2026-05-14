@@ -8,14 +8,31 @@ Paper Trace 用于从论文文本或 PDF 中抽取引用意图，生成结构化
 - `skills/`：指导 Agent 生成引用意图分析、JSON 图谱和 SVG 图像的 Citation Map Skills。
 - `CitePrompt/` 与 `sci_glm/`：本地私有历史参考代码，已按 private code 规则从 Git 上传中排除。
 
-### 启动 Web
+## 安装依赖
 
-Anaconda：
+建议先在你自己的 Python / conda / venv 环境中安装依赖：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace web --debug --host 127.0.0.1 --port 8765
+python -m pip install -r requirements-paper-trace.txt
 ```
-base python:
+
+按需安装真实 provider 和 PDF 解析依赖：
+
+```powershell
+python -m pip install openai
+python -m pip install zhipuai
+python -m pip install pypdf
+```
+
+如果本机需要固定使用某个解释器，例如 Windows Anaconda，可以设置：
+
+```powershell
+$env:PAPER_TRACE_PYTHON="path\to\python.exe"
+```
+
+补充脚本会优先使用 `PAPER_TRACE_PYTHON`；未设置时回退到 PATH 中的 `python`。
+
+## 启动 Web
 
 ```powershell
 python -m paper_trace web --debug --host 127.0.0.1 --port 8765
@@ -27,26 +44,26 @@ python -m paper_trace web --debug --host 127.0.0.1 --port 8765
 http://127.0.0.1:8765
 ```
 
-### 配置 API
+## 配置 API
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config path
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config list
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config set --provider openai-compatible --api-key "your-key" --base-url "https://api.anyone.ai/v1" --model "gpt-5.5" --stream true --timeout 300
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config set --provider zhipu-glm --api-key "your-key" --model "glm-4-flash"
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config clear --provider openai-compatible
+python -m paper_trace config path
+python -m paper_trace config list
+python -m paper_trace config set --provider openai-compatible --api-key "your-key" --base-url "https://api.anyone.ai/v1" --model "gpt-5.5" --stream true --timeout 300
+python -m paper_trace config set --provider zhipu-glm --api-key "your-key" --model "glm-4-flash"
+python -m paper_trace config clear --provider openai-compatible
 ```
 
 真实 API Key 只应保存到本机 `.paper_trace/config.json`，不要写入代码、README、测试或输出样例。
 
-### 运行 CLI 分析
+## 运行 CLI 分析
 
 默认 `--visual-mode all`，会同时生成当前分组视图和例图引用链视图。
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace analyze path\to\paper.txt --out outputs\paper-demo --provider mock
-C:\ProgramData\anaconda3\Python.exe -m paper_trace analyze path\to\paper.txt --out outputs\paper-llm --provider openai-compatible --visual-mode all
-C:\ProgramData\anaconda3\Python.exe -m paper_trace analyze path\to\paper.txt --out outputs\paper-example --provider mock --visual-mode example
+python -m paper_trace analyze path\to\paper.txt --out outputs\paper-demo --provider mock
+python -m paper_trace analyze path\to\paper.txt --out outputs\paper-llm --provider openai-compatible --visual-mode all
+python -m paper_trace analyze path\to\paper.txt --out outputs\paper-example --provider mock --visual-mode example
 ```
 
 `--visual-mode` 可选值：
@@ -68,17 +85,17 @@ outputs/paper-demo/
 └── source.txt
 ```
 
-### 校验与重新渲染
+## 校验与重新渲染
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace validate outputs\paper-demo\citation_graph.json
-C:\ProgramData\anaconda3\Python.exe -m paper_trace render outputs\paper-demo\citation_graph.json --out outputs\paper-rendered --visual-mode all
-C:\ProgramData\anaconda3\Python.exe -m paper_trace render outputs\paper-demo\citation_graph.json --out outputs\paper-rendered-example --visual-mode example
+python -m paper_trace validate outputs\paper-demo\citation_graph.json
+python -m paper_trace render outputs\paper-demo\citation_graph.json --out outputs\paper-rendered --visual-mode all
+python -m paper_trace render outputs\paper-demo\citation_graph.json --out outputs\paper-rendered-example --visual-mode example
 ```
 
-### 补充脚本入口
+## 补充脚本入口
 
-脚本不是主入口，只作为 Windows 下的补充：
+脚本不是主入口，只作为 Windows 下的补充。脚本优先使用 `PAPER_TRACE_PYTHON`，否则使用 PATH 中的 `python`。
 
 ```powershell
 scripts\paper_trace.cmd --help
@@ -86,7 +103,8 @@ scripts\paper_trace.cmd analyze path\to\paper.txt --out outputs\paper-demo --pro
 scripts\web_debug.cmd
 ```
 
-`scripts\paper_trace.cmd` 固定调用 `C:\ProgramData\anaconda3\Python.exe -m paper_trace` 并透传参数；`scripts\web_debug.cmd` 固定启动 Anaconda 版本的 Web 调试服务。
+- `scripts\paper_trace.cmd`：透传 CLI 子命令。
+- `scripts\web_debug.cmd`：启动 Web debug 服务。
 
 ## 图像模式
 
@@ -104,7 +122,7 @@ Web 首页提供“图像模式”下拉框。编辑 citation 后会按照该 ru
 OpenAI-compatible provider 默认启用流式响应，适合中转站长请求：
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m paper_trace config set --provider openai-compatible --api-key "your-key" --base-url "https://api.anyone.ai/v1" --model "gpt-5.5" --stream true --timeout 300
+python -m paper_trace config set --provider openai-compatible --api-key "your-key" --base-url "https://api.anyone.ai/v1" --model "gpt-5.5" --stream true --timeout 300
 ```
 
 如果中转站后台显示已消费但本地报 `Connection error`，优先确认：
@@ -112,7 +130,7 @@ C:\ProgramData\anaconda3\Python.exe -m paper_trace config set --provider openai-
 - `stream=true`
 - `timeout=300` 或更高
 - `base_url` 以 `/v1` 结尾并兼容 OpenAI Chat Completions
-- 当前运行命令使用 `C:\ProgramData\anaconda3\Python.exe`
+- 当前终端的 `python` 指向已安装所需依赖的环境，或通过 `PAPER_TRACE_PYTHON` 指定解释器
 
 ## Citation Map Skills
 
@@ -130,32 +148,19 @@ Skill 默认尽可能落盘：
 
 当用户明确说“规范地 / 使用模板 / 标准格式 / 固定结构 / template / standard format”时，Skill 会使用固定 `analysis.md` 模板；普通“分析引用意图”不会强制固定章节。
 
-## 安装依赖
-
-```powershell
-C:\ProgramData\anaconda3\Python.exe -m pip install -r requirements-paper-trace.txt
-```
-
-按需安装：
-
-```powershell
-C:\ProgramData\anaconda3\Python.exe -m pip install openai
-C:\ProgramData\anaconda3\Python.exe -m pip install zhipuai
-C:\ProgramData\anaconda3\Python.exe -m pip install pypdf
-```
-
 ## 本地文件与安全
 
 - `.paper_trace/`：本机 provider 配置，可能包含 API Key，已忽略。
 - `outputs/`：本地运行产物，已忽略。
 - `.omx/`：本地 agent 状态与日志，已忽略。
+- `.vscode/`：本地 IDE 配置，已忽略。
 - `CitePrompt/`、`sci_glm/`：私有历史参考代码，已按 private code 规则忽略。
 - 文档示例只使用 `your-key` 占位符，不应提交真实密钥。
 
 ## 验证
 
 ```powershell
-C:\ProgramData\anaconda3\Python.exe -m unittest tests.test_paper_trace -v
-Get-ChildItem -Recurse paper_trace -Filter *.py | ForEach-Object { C:\ProgramData\anaconda3\Python.exe -m py_compile $_.FullName }
+python -m unittest tests.test_paper_trace -v
+Get-ChildItem -Recurse paper_trace -Filter *.py | ForEach-Object { python -m py_compile $_.FullName }
 cmd /c scripts\paper_trace.cmd --help
 ```

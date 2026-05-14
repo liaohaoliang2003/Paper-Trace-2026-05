@@ -169,7 +169,7 @@ class OpenAICompatibleProvider(BaseProvider):
         if not self.api_key:
             raise ValueError(
                 "Missing PAPER_TRACE_OPENAI_API_KEY for openai-compatible provider. "
-                "Configure it with `C:\\ProgramData\\anaconda3\\Python.exe -m paper_trace config set`, "
+                "Configure it with `python -m paper_trace config set`, "
                 "Web settings, or an environment variable."
             )
         self.base_url = resolved["base_url"]
